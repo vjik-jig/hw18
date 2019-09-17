@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>To Do List</title>
+    <style>
+      .done {
+        color: blue;
+        text-decoration: line-through;
+      }
+    </style>
+  </head>
+  <body>
+    <form class="form-todo">
+      <input type="text" class="input-todo" placeholder="Type Your Note Here" />
+      <button class="btn-add">Add</button>
+    </form>
+    <ul class="ul-todo"></ul>
+    <script>
+      const toDo = {
+        list: [],
+        create: function(str) {          
+          if (!this.checkUnique(str)) {
+            const randomID = this.createId();
+            const newNote = {
+              text: str,
+              isDone: false,
+              id: randomID
+            }
+            this.list.push(newNote);
+            this.renderHTML(newNote);
+            
+            localStorage.setItem("toDo", JSON.stringify(toDo.list));
+          } else {
+            alert("This Note Already exist!");
+          }
+        },
+        deleteTask: function(item) {
+          const indexOfNote = this.list.findIndex(function(value) {
+            return value.id === item;
+          });
+          this.list.splice(indexOfNote, 1);
+        },
+        doneChecker: function(item) {
+          const indexOfNote = this.list.findIndex(function(value) {
+            return value.id === item;
+          });
+          this.list[indexOfNote].isDone = !this.list[indexOfNote].isDone;
+        },
+        renderHTML: function(item) {
+          const $ul = document.querySelector(".ul-todo");
+          const $li = document.createElement("li");
+          $li.innerText = item.text;
+          $li.classList.add(item.id);
+          if (item.isDone) {
+            $li.classList.add("done");
+          }
+          const $btnDone = document.createElement("button");
+          $btnDone.classList.add("btn-done");
+          $btnDone.innerText = "Done";
+          function handlerDone() {
+            toDo.doneChecker(item.id);
+            $li.classList.toggle("done");
+            localStorage.setItem("toDo", JSON.stringify(toDo.list));
+          }
+          $btnDone.addEventListener("click", handlerDone);
+          $li.append($btnDone);
+
+          const $btnDelete = document.createElement("button");
+          $btnDelete.classList.add("btn-delete");
+          $btnDelete.innerText = "Delete";
+          function handlerDelete() {
+            const conFirm = confirm("Are u really want to delete this Note??");
+            if (conFirm) {
+              toDo.deleteTask(item.id);
+              $li.parentNode.removeChild($li);
+              localStorage.setItem("toDo", JSON.stringify(toDo.list));
+              $btnDone.removeEventListener("click", handlerDone);
+              $btnDelete.removeEventListener("click", handlerDelete);
+            }
+          }
+          $btnDelete.addEventListener("click", handlerDelete);
+          $li.append($btnDelete);
+
+          $ul.append($li);
+        },
+
+        // вспомагательные методы
+        checkUnique: function(str) {
+          return this.list.some(function(item) {
+            return item.text === str;
+          });
+        },
+        createId: function() {
+          return (
+            "_" +
+            Math.random()
+              .toString(36)
+              .substr(2, 9)
+          );
+        }
+      };
+
+      const savedList = localStorage.getItem("toDo");
+      if (savedList) {
+        toDo.list = [...JSON.parse(savedList)];
+        toDo.list.forEach(toDo.renderHTML);
+      }      
+
+      const $inputTodo = document.querySelector(".input-todo");
+      const $btnAdd = document.querySelector(".btn-add");
+
+      $btnAdd.addEventListener("click", e => {
+        e.preventDefault();
+        toDo.create($inputTodo.value);
+        $inputTodo.value = "";
+      });
+      $inputTodo.addEventListener("keypress", e => {
+        if (e.keyCode === 13) {
+          e.preventDefault();
+          toDo.create($inputTodo.value);
+          $inputTodo.value = "";
+        }
+      });
+    </script>
+  </body>
+</html>
