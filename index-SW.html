@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>SW API Wrapper</title>
+  </head>
+  <body>
+    <form class="my-form">
+      <select class="sw-select" onchange="optionChoose.call(this)">
+        <option selected>Choose section of SW library:</option>
+        <option value="https://swapi.co/api/films/">Films</option>
+        <option value="https://swapi.co/api/people/">People</option>
+        <option value="https://swapi.co/api/planets/">Planets</option>
+        <option value="https://swapi.co/api/species/">Species</option>
+        <option value="https://swapi.co/api/starships/">Starships</option>
+        <option value="https://swapi.co/api/vehicles/">Vehicles</option>
+      </select>
+      <br />
+      <select class="output-select" onchange="selectShow.call(this)">
+        <option>Result:</option>
+      </select>
+    </form>
+    <script>
+      let filmArr = [];
+      function optionChoose() {
+        const xhr = new XMLHttpRequest();
+        const valueHref = this.options[this.selectedIndex].value;
+        xhr.open("get", valueHref, true);
+        xhr.send();
+        xhr.onload = function() {
+          const receivedArr = JSON.parse(this.response).results;
+          const outputSelect = document.querySelector(".output-select");
+          outputSelect.innerHTML = "";
+          const dropTitle = new Option("Select Item:");
+          outputSelect.append(dropTitle);
+          filmArr.splice(0, filmArr.length);
+          receivedArr.forEach(item => {
+            let innerArr = {};
+            if (item.name || item.title) {
+              const newOption = new Option(item.name || item.title);
+              outputSelect.append(newOption);
+            }
+            if (item.films) {
+              innerArr = {
+                optionSelector: item.name,
+                films: []
+              };
+              item.films.forEach(filmHref => {
+                const xhrFilm = new XMLHttpRequest();
+                xhrFilm.open("get", filmHref, true);
+                xhrFilm.send();
+                xhrFilm.onload = function() {
+                  const newFilm = JSON.parse(this.response).title;
+                  innerArr.films.push(newFilm);
+                };
+              });
+              filmArr.push(innerArr);
+            }
+          });
+        };
+      }
+      function selectShow() {
+        const selectedOpt = this.options[this.selectedIndex].text;
+        filmArr.forEach(item => {
+          if (item.optionSelector === selectedOpt) {
+            const outputSelect = document.querySelector(".output-select");
+            outputSelect.innerHTML = "";
+            const filmDropTitle = new Option("Starred in:");
+            outputSelect.append(filmDropTitle);
+            item.films.forEach(item => {
+              const newOption = new Option(item);
+              outputSelect.append(newOption);
+            });
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
